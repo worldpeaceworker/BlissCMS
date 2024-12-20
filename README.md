@@ -30,4 +30,4 @@ Bliss empowers:
 
 Bliss’s integration with the broader network ensures users benefit from both independence and community, creating a harmonious balance between individuality and connectivity.
 
-Bliss: Build your platform. Connect your world. Own your data.
+Build your platform. Connect your world. Own your data.
