@@ -1,6 +1,4 @@
-Bliss.social: Decentralized Social Media Platform
-
-Bliss.social is a decentralized social media platform inspired by the peer-to-peer (P2P) architecture of BitTorrent. It empowers users to build, customize, and operate their own social networks while retaining full control over their data and interactions. With Bliss.social, your platform is entirely yours—secure, private, and censorship-resistant.
+Bliss.social is a decentralized social media platform and CMS inspired by the peer-to-peer (P2P) architecture of BitTorrent. It empowers users to build, customize, and operate their own social networks while retaining full control over their data and interactions. With Bliss.social, your platform is entirely yours—secure, private, and censorship-resistant.
 
 Project Overview
 
