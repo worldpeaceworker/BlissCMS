@@ -1,55 +1,35 @@
-# Bliss
-Bliss is a Web3 Social Media Platform Builder.
+Bliss.social: Decentralized Social Media Platform
 
-## Overview
+Bliss.social is a decentralized social media platform inspired by the peer-to-peer (P2P) architecture of BitTorrent. It empowers users to build, customize, and operate their own social networks while retaining full control over their data and interactions. With Bliss.social, your platform is entirely yours—secure, private, and censorship-resistant.
 
-Bliss empowers users to create and manage decentralized social media platforms effortlessly. By leveraging blockchain technology, Bliss ensures data privacy, security, and user ownership.
+Project Overview
 
-## Features
+Bliss is an open-source, decentralized platform CMS that allows individuals, communities, and organizations to create, launch, and manage custom social media platforms. Whether for one person or a large community, Bliss enables users to build private or public spaces while seamlessly connecting with the larger Bliss network for shared content and interaction.
 
-- **Decentralized**: Built on blockchain technology to guarantee data integrity and security.
-- **Customizable**: Highly customizable to meet diverse social media requirements.
-- **User Ownership**: Users retain full control over their data and content.
-- **Scalable**: Designed to scale with your platform's growth.
-- **Interoperable**: Compatible with various blockchain networks and protocols.
+Bliss offers a unique blend of personalization and connectivity. Users can create platforms under a Bliss subdomain or their own custom domain, tailoring the experience to their specific needs. Even a single user can benefit from their own private social media platform, enjoying full customization while still accessing content shared publicly across the broader Bliss ecosystem.
 
-## Getting Started
+Key Features
+	•	Peer-to-Peer Architecture: Bliss.social operates without centralized servers, ensuring resilience and scalability as each user contributes to the network.
+	•	Data Ownership: Users host their data on personal or trusted devices, retaining full control and ownership over their content.
+	•	Customizable Social Networks: Create your own social media platform with unique features, designs, and policies.
+	•	Censorship Resistance: Decentralization eliminates reliance on centralized authorities, providing freedom of expression.
+	•	Blockchain Integration: Blockchain is used for user identity verification, secure transactions, and decentralized governance.
+	•	Decentralized Storage: IPFS (InterPlanetary File System) ensures secure, distributed storage of media and metadata.
+	•	Incentive Mechanism: Users are rewarded with tokens or credits for contributing bandwidth and hosting network content.
+	•	Connected Ecosystem: Platforms remain independent yet interoperable within the larger Bliss.social network, enabling shared public content and discovery.
 
-Development is starting soon. Stay tuned for updates on how to get started with Bliss.
+Why Bliss?
 
-## Contributing
+The centralized social media model has failed to prioritize user needs, privacy, and control. Bliss.social redefines social networking by putting power back into the hands of users. No corporations own your data, no algorithms dictate your experience, and no single authority decides what you can or cannot share.  Bliss changes this dynamic by putting power back into users’ hands. Whether you’re an individual seeking a personal space to curate and share content or a large organization creating a branded social network, Bliss offers the tools to build platforms on your terms.
 
-We welcome contributions! Please read our [contributing guidelines](./CONTRIBUTING.md) to get started. Contributions can include bug fixes, new features, and documentation improvements.
 
-## License
 
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+Bliss empowers:
+	•	Individuals: Create private or public platforms for self-expression and personalized content sharing.
+	•	Communities: Foster connections in spaces designed around shared interests and values.
+	•	Businesses: Establish secure, branded platforms for customers and employees.
+	•	Innovators: Explore new possibilities in decentralized, customizable social networking.
 
-## Project Overview
+Bliss’s integration with the broader network ensures users benefit from both independence and community, creating a harmonious balance between individuality and connectivity.
 
-Bliss is an innovative platform designed to revolutionize the way social media applications are built and managed. By integrating cutting-edge blockchain technology, Bliss offers a decentralized approach to social media, ensuring that users have complete control over their data and content. This project aims to provide a robust, scalable, and customizable solution for developers and organizations looking to create their own social media platforms with enhanced security and privacy features.
-
-### Key Objectives
-
-- **Empower Users**: Enable users to create and manage their own social media platforms with ease.
-- **Ensure Privacy**: Utilize blockchain technology to protect user data and maintain privacy.
-- **Promote Ownership**: Allow users to retain ownership of their content and data.
-- **Facilitate Customization**: Offer extensive customization options to cater to diverse needs.
-- **Support Scalability**: Design the platform to scale efficiently as user bases grow.
-- **Enhance Interoperability**: Ensure compatibility with various blockchain networks and protocols.
-
-### Target Audience
-
-Bliss is ideal for:
-
-- **Developers**: Looking to build decentralized social media applications.
-- **Organizations**: Seeking to create secure and private social media platforms for their communities.
-- **Blockchain Enthusiasts**: Interested in exploring the integration of blockchain technology with social media.
-
-### Future Plans
-
-- **Feature Enhancements**: Continuously improve and add new features based on user feedback.
-- **Community Engagement**: Foster a vibrant community of developers and users to drive innovation.
-- **Partnerships**: Collaborate with other blockchain projects and organizations to expand the ecosystem.
-
-By focusing on these objectives, Bliss aims to set a new standard for social media platform development, prioritizing user empowerment, data privacy, and technological innovation.
+Bliss: Build your platform. Connect your world. Own your data.
