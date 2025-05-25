@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    /* Base Options: Provided by 'tsc --init' or 'nx g tsconfig' */
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true, // Ensures files can be safely transpiled without type information
+    "skipLibCheck": true,
+    "strict": true, // Enable all strict type-checking options
+
+    /* Module Resolution Options */
+    "moduleResolution": "node", // Or "bundler" for modern setups if preferred
+    "resolveJsonModule": true, // Allows importing JSON files
+
+    /* Emit Options */
+    "declaration": true, // Generate .d.ts files from TypeScript and JavaScript files in your project.
+    "noEmit": false, // Default is false, set to true if bundler handles emit (e.g. Next.js) but for a base lib config, false is fine.
+    "outDir": "dist", // Or specific per-package, but good as a base default
+
+    /* JavaScript Support */
+    "allowJs": true, // Allow JavaScript files to be a part of your program.
+    "checkJs": false, // Run TypeScript type checking on JavaScript files as well.
+
+    /* Language and Environment */
+    "lib": ["es2020", "dom"], // Add "dom" if any code targets browser environments
+    "target": "es2020", // Or a newer target like "es2021", "esnext"
+
+    /* Completeness */
+    // "skipDefaultLibCheck": true, // Recommended for faster builds if skipLibCheck is also true
+
+    /* Monorepo Specific (Conceptual - actual paths depend on your setup) */
+    // "baseUrl": ".", // Often set to "." for monorepo root path resolution
+    // "paths": {
+    //   "@blisscms/*": ["packages/*/src"] // Example if using path aliases
+    // }
+    // Note: Nx often handles path aliases automatically via its own mechanisms.
+    // For a generic base, explicit paths might be omitted or need careful setup.
+  },
+  "exclude": ["node_modules", "dist", "tmp"] // Common exclusions
+}
