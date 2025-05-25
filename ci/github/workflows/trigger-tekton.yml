@@ -1,0 +1,18 @@
+# GitHub Actions Workflow: Trigger Tekton Pipeline
+# Purpose: Responsible for triggering the appropriate Tekton Pipelines
+# (e.g., build-and-push, helm-release) in the Kubernetes cluster.
+# This might involve sending a webhook to a Tekton EventListener or
+# using kubectl with proper authentication.
+#
+# name: Trigger Tekton Pipeline
+# on:
+#   push:
+#     branches: [ main ] # Example trigger
+#   workflow_dispatch: {} # Manual trigger
+# jobs:
+#   trigger:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Trigger Tekton
+#         run: echo "Triggering Tekton Pipeline..."
+#         # Add steps to call Tekton webhook or use kubectl

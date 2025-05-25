@@ -1,0 +1,14 @@
+# GitHub Actions Workflow: PR Validation
+# Purpose: Performs quick validation tasks on Pull Requests,
+# such as linting, unit tests, or other checks before triggering
+# more extensive Tekton pipelines.
+#
+# name: PR Validation
+# on: [pull_request]
+# jobs:
+#   validate:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+#       # Add linting, testing steps here
