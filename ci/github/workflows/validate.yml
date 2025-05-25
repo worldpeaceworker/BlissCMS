@@ -2,13 +2,51 @@
 # Purpose: Performs quick validation tasks on Pull Requests,
 # such as linting, unit tests, or other checks before triggering
 # more extensive Tekton pipelines.
-#
-# name: PR Validation
-# on: [pull_request]
-# jobs:
-#   validate:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-#       # Add linting, testing steps here
+
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop # Add other long-lived branches if any
+
+jobs:
+  validate:
+    name: Lint, Test, and Build Affected Projects
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for Nx to determine affected projects
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Specify your project's Node.js version
+          cache: 'npm' # Or 'yarn' or 'pnpm' if you use those
+
+      - name: Install Dependencies
+        run: npm ci # Or yarn install --frozen-lockfile or pnpm install --frozen-lockfile
+
+      # Note: The following Nx commands assume Nx is set up for these tasks.
+      # You might need to adjust if your Nx setup is different or if you're not using Nx for all tasks.
+
+      - name: Lint Affected Projects
+        run: npx nx affected --target=lint --parallel=3 --bail # Adjust parallel based on runner cores
+
+      - name: Test Affected Projects
+        run: npx nx affected --target=test --parallel=3 --bail # Adjust parallel
+
+      # Optional: Build affected projects to catch build errors early
+      # This can be time-consuming; enable if critical for your workflow.
+      - name: Build Affected Apps
+        run: npx nx affected --target=build --parallel=3 --bail # For buildable apps
+
+      # Example for a non-Nx setup (if you need to run per-package or globally):
+      # - name: Run ESLint
+      #   run: npm run lint --if-present # Or specific lint command
+
+      # - name: Run Unit Tests
+      #   run: npm run test --if-present # Or specific test command

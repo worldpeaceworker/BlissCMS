@@ -10,18 +10,57 @@ The workflows themselves are located in the `workflows/` subdirectory (`ci/githu
 
 ## Planned Workflows
 
-The following workflows are planned:
+The following workflows are defined:
 
-1.  **`workflows/validate.yml`**:
-    *   **Trigger**: Pull Requests.
-    *   **Purpose**: Performs quick validation tasks such as linting, running unit tests, or other checks that can be done efficiently within GitHub Actions before triggering more extensive (and potentially resource-intensive) Tekton pipelines.
+### 1. **`workflows/validate.yml`**
+    *   **Name**: PR Validation
+    *   **Purpose**: Performs quick validation tasks on Pull Requests to ensure code quality and correctness before merging or triggering more resource-intensive Tekton pipelines.
+    *   **Triggers**:
+        *   On `pull_request` to `main`, `develop` (and other specified long-lived branches).
+    *   **Key Steps**:
+        *   Checks out code (with full fetch depth for Nx).
+        *   Sets up Node.js and installs dependencies using `npm ci`.
+        *   Leverages Nx to lint, test, and optionally build only the projects affected by the PR, using commands like:
+            *   `npx nx affected --target=lint`
+            *   `npx nx affected --target=test`
+            *   `npx nx affected --target=build` (optional)
+    *   **Notes**: Assumes an Nx monorepo setup for optimal performance.
 
-2.  **`workflows/trigger-tekton.yml`**:
-    *   **Trigger**: Specific events like pushes to main branches, tag creation, or manual dispatch.
-    *   **Purpose**: Responsible for triggering the appropriate Tekton Pipelines (e.g., `build-and-push`, `helm-release`) in the Kubernetes cluster. This might involve sending a webhook to a Tekton EventListener or using `kubectl` with proper authentication if a more direct method is set up.
+### 2. **`workflows/trigger-tekton.yml`**
+    *   **Name**: Trigger Tekton Pipeline
+    *   **Purpose**: Responsible for initiating Tekton Pipelines in the Kubernetes cluster (e.g., for building images, deploying applications).
+    *   **Triggers**:
+        *   On `push` to `main` branch (typically for production-related pipelines).
+        *   On `push` to `develop` branch (typically for staging-related pipelines).
+        *   On `workflow_dispatch` (manual trigger) with inputs for:
+            *   `pipeline_name` (e.g., `build-and-push`, `helm-release`)
+            *   `target_environment` (e.g., `staging`, `prod`)
+            *   `image_tag` (optional, defaults to commit SHA)
+    *   **Key Steps**:
+        *   Determines parameters (pipeline name, environment, image tag, git revision) based on the trigger event.
+        *   Authenticates to Kubernetes (requires `KUBECONFIG_CREDENTIALS` secret).
+        *   Dynamically generates a Tekton `PipelineRun` YAML and applies it using `kubectl apply -f <generated-pipelinerun.yaml>` in the `tekton-ci` namespace.
+        *   (Alternative, commented out: Can be adapted to send a webhook to a Tekton EventListener if one is configured, requiring a `TEKTON_WEBHOOK_URL` secret).
+    *   **Notes**: The structure of the `PipelineRun` YAML depends on the specific Tekton Pipeline definitions.
 
-3.  **`workflows/build-image.yml`**:
-    *   **Trigger**: Potentially manual dispatch or specific scenarios.
-    *   **Purpose**: Acts as a fallback or alternative mechanism for building container images directly within GitHub Actions (e.g., using Docker build and push actions). This could be useful if the primary Tekton-based image building is unavailable or for specific types of images not suitable for the Tekton pipeline.
+### 3. **`workflows/build-image.yml`**
+    *   **Name**: Build Image (Fallback)
+    *   **Purpose**: Provides a manual, fallback mechanism for building and pushing container images directly within GitHub Actions, bypassing Tekton if needed.
+    *   **Triggers**:
+        *   On `workflow_dispatch` (manual trigger) with inputs for:
+            *   `image_name` (e.g., `my-app`, `keystone`)
+            *   `image_tag` (e.g., `latest`, `v1.0.0`)
+            *   `dockerfile_path` (path to the Dockerfile)
+            *   `build_context` (build context directory)
+            *   `registry_user` (optional; if empty, defaults to GitHub Container Registry, otherwise used for registries like Docker Hub).
+    *   **Key Steps**:
+        *   Sets up QEMU (optional, for multi-platform builds) and Docker Buildx.
+        *   Determines registry details:
+            *   Defaults to GitHub Container Registry (`ghcr.io/OWNER/IMAGE_NAME`) using `GITHUB_TOKEN` for authentication if `registry_user` input is empty.
+            *   For other registries (e.g., Docker Hub), uses `registry_user` and expects secrets like `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
+        *   Logs into the specified container registry.
+        *   Builds the Docker image using `docker/build-push-action` and pushes it to the registry.
+        *   Utilizes Docker layer caching for faster subsequent builds.
+    *   **Permissions**: Requires `packages: write` for pushing to GHCR.
 
-These workflows will be defined in their respective YAML files within the `workflows/` subdirectory.
+These workflows aim to create a robust CI foundation, integrating GitHub Actions with Tekton for a comprehensive CI/CD solution.

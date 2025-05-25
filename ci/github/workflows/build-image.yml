@@ -1,26 +1,97 @@
 # GitHub Actions Workflow: Build Image (Fallback)
 # Purpose: Acts as a fallback or alternative mechanism for building
 # container images directly within GitHub Actions.
-#
-# name: Build Image (Fallback)
-# on: [workflow_dispatch] # Manual trigger
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-#       - name: Set up Docker Buildx
-#         uses: docker/setup-buildx-action@v2
-#       - name: Login to DockerHub
-#         uses: docker/login-action@v2
-#         with:
-#           username: ${{ secrets.DOCKERHUB_USERNAME }}
-#           password: ${{ secrets.DOCKERHUB_TOKEN }}
-#       - name: Build and push
-#         uses: docker/build-push-action@v3
-#         with:
-#           context: .
-#           file: ./Dockerfile # Example, adjust as needed
-#           push: true
-#           tags: user/app:latest # Example, adjust as needed
+
+name: Build Image (Fallback)
+
+on:
+  workflow_dispatch: # Manual trigger
+    inputs:
+      image_name:
+        description: 'Name of the image (e.g., my-app or keystone)'
+        required: true
+      image_tag:
+        description: 'Tag for the image (e.g., latest, v1.0.0, or git SHA)'
+        required: true
+        default: 'latest'
+      dockerfile_path:
+        description: 'Path to the Dockerfile (e.g., ./apps/admin/Dockerfile)'
+        required: true
+        default: './Dockerfile' # Default to root Dockerfile
+      build_context:
+        description: 'Build context path (e.g., . or ./apps/admin)'
+        required: true
+        default: '.' # Default to repo root
+      registry_user:
+        description: 'Container registry username (leave empty for GHCR default)'
+        required: false
+      # Add other inputs as needed, e.g., platform for multi-arch builds
+
+jobs:
+  build_and_push_image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # To checkout the repository
+      packages: write # To push to GitHub Container Registry (GHCR) if used
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (for multi-platform builds - optional)
+        uses: docker/setup-qemu-action@v3
+        # Consider adding specific platforms if needed:
+        # with:
+        #   platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Determine Registry and Image Name
+        id: registry_info
+        run: |
+          # Default to GitHub Container Registry (ghcr.io) if no specific user is provided
+          # Assumes ghcr.io/OWNER/IMAGE_NAME format for GHCR
+          # For other registries, registry_user might be part of the full image path or a login server.
+          _registry_user=${{ github.event.inputs.registry_user }}
+          _image_name=${{ github.event.inputs.image_name }}
+          
+          if [[ -z "$_registry_user" ]]; then
+            # Using GHCR, owner is derived from repository owner
+            _owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            echo "full_image_name=ghcr.io/$_owner/$_image_name" >> $GITHUB_OUTPUT
+            echo "login_server=ghcr.io" >> $GITHUB_OUTPUT
+            echo "username=${{ github.actor }}" >> $GITHUB_OUTPUT # For GHCR, actor is often the user
+            echo "password=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT # GITHUB_TOKEN for GHCR
+          else
+            # For Docker Hub or other registries, adapt as needed
+            # This example assumes registry_user is the Docker Hub username
+            echo "full_image_name=$_registry_user/$_image_name" >> $GITHUB_OUTPUT
+            echo "login_server=" >> $GITHUB_OUTPUT # Docker Hub is default for docker/login-action
+            echo "username=${{ secrets.DOCKERHUB_USERNAME }}" >> $GITHUB_OUTPUT
+            echo "password=${{ secrets.DOCKERHUB_TOKEN }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.registry_info.outputs.login_server }}
+          username: ${{ steps.registry_info.outputs.username }}
+          password: ${{ steps.registry_info.outputs.password }}
+
+      - name: Build and Push Docker Image
+        id: build # Give an id to the build step to access its outputs
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ github.event.inputs.build_context }}
+          file: ${{ github.event.inputs.dockerfile_path }}
+          push: true
+          tags: ${{ steps.registry_info.outputs.full_image_name }}:${{ github.event.inputs.image_tag }}
+          # platforms: linux/amd64,linux/arm64 # Example for multi-platform
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Image Digest
+        run: echo "Pushed image digest: ${{ steps.build.outputs.digest }}" # 'build' is the default id for docker/build-push-action

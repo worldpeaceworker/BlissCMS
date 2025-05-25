@@ -1,18 +1,149 @@
 # GitHub Actions Workflow: Trigger Tekton Pipeline
 # Purpose: Responsible for triggering the appropriate Tekton Pipelines
 # (e.g., build-and-push, helm-release) in the Kubernetes cluster.
-# This might involve sending a webhook to a Tekton EventListener or
-# using kubectl with proper authentication.
-#
-# name: Trigger Tekton Pipeline
-# on:
-#   push:
-#     branches: [ main ] # Example trigger
-#   workflow_dispatch: {} # Manual trigger
-# jobs:
-#   trigger:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Trigger Tekton
-#         run: echo "Triggering Tekton Pipeline..."
-#         # Add steps to call Tekton webhook or use kubectl
+
+name: Trigger Tekton Pipeline
+
+on:
+  push:
+    branches:
+      - main # Trigger for production on push to main
+      - develop # Trigger for staging on push to develop
+  workflow_dispatch: # Allows manual triggering
+    inputs:
+      pipeline_name:
+        description: 'Name of the Tekton Pipeline to trigger (e.g., build-and-push, helm-release)'
+        required: true
+        default: 'build-and-push'
+      target_environment:
+        description: 'Target environment (e.g., staging, prod)'
+        required: true
+        default: 'staging'
+      image_tag:
+        description: 'Image tag to use (often git SHA)'
+        required: false
+        default: '' # Default to GitHub SHA if not provided
+
+jobs:
+  trigger_pipeline:
+    name: Trigger Tekton Pipeline
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # To read repository content like commit SHA
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Determine Image Tag
+        id: image_tag_step
+        run: |
+          if [[ -n "${{ github.event.inputs.image_tag }}" ]]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set Target Environment from Branch (for push events)
+        id: target_env_step
+        if: github.event_name == 'push'
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT # Default or error
+          fi
+
+      - name: Get Parameters
+        id: params
+        run: |
+          echo "pipeline_name=${{ github.event.inputs.pipeline_name || 'build-and-push' }}" >> $GITHUB_OUTPUT
+          echo "target_environment=${{ github.event.inputs.target_environment || steps.target_env_step.outputs.environment }}" >> $GITHUB_OUTPUT
+          echo "image_tag=${{ steps.image_tag_step.outputs.tag }}" >> $GITHUB_OUTPUT
+          echo "git_revision=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "repository_url=https://github.com/${{ github.repository }}" >> $GITHUB_OUTPUT
+
+      - name: Display Trigger Parameters
+        run: |
+          echo "Pipeline Name: ${{ steps.params.outputs.pipeline_name }}"
+          echo "Target Environment: ${{ steps.params.outputs.target_environment }}"
+          echo "Image Tag: ${{ steps.params.outputs.image_tag }}"
+          echo "Git Revision: ${{ steps.params.outputs.git_revision }}"
+          echo "Repository URL: ${{ steps.params.outputs.repository_url }}"
+
+      # Option 1: Trigger via kubectl apply (requires kubeconfig secret and PipelineRun YAML)
+      - name: Configure kubectl
+        uses: azure/k8s-actions/aks-set-context@v1 # Example, use appropriate action for your K8s provider
+        with:
+          creds: '${{ secrets.KUBECONFIG_CREDENTIALS }}' # Kubeconfig content as a secret
+        # Or use google-github-actions/auth and google-github-actions/get-gke-credentials for GKE
+        # Or aws-actions/configure-aws-credentials and aws-actions/amazon-eks-cluster for EKS
+
+      - name: Create PipelineRun YAML and Apply
+        env:
+          PIPELINE_NAME: ${{ steps.params.outputs.pipeline_name }}
+          TARGET_ENV: ${{ steps.params.outputs.target_environment }}
+          IMAGE_TAG: ${{ steps.params.outputs.image_tag }}
+          GIT_REVISION: ${{ steps.params.outputs.git_revision }}
+          REPO_URL: ${{ steps.params.outputs.repository_url }}
+        run: |
+          # This is a conceptual PipelineRun. Actual structure depends on your Tekton Pipeline definitions.
+          # You might generate this from a template or have predefined PipelineRuns.
+          cat <<EOF > pipeline-run.yaml
+          apiVersion: tekton.dev/v1beta1
+          kind: PipelineRun
+          metadata:
+            name: \${PIPELINE_NAME}-\$(date +%s)-\$(echo \${GIT_REVISION} | cut -c1-7)
+            namespace: tekton-ci # Ensure this namespace exists and is configured
+          spec:
+            pipelineRef:
+              name: \${PIPELINE_NAME}
+            params:
+              - name: target-environment
+                value: \${TARGET_ENV}
+              - name: image-tag
+                value: \${IMAGE_TAG}
+              - name: git-revision
+                value: \${GIT_REVISION}
+              - name: repository-url
+                value: \${REPO_URL}
+            # Add workspace bindings if your pipeline requires them
+            # workspaces:
+            # - name: shared-workspace
+            #   volumeClaimTemplate:
+            #     spec:
+            #       accessModes:
+            #         - ReadWriteOnce
+            #       resources:
+            #         requests:
+            #           storage: 1Gi
+          EOF
+
+          echo "--- Generated PipelineRun YAML ---"
+          cat pipeline-run.yaml
+          echo "----------------------------------"
+
+          kubectl apply -f pipeline-run.yaml
+
+      # Option 2: Trigger via Tekton EventListener Webhook (Simpler if EventListener is set up)
+      # - name: Trigger Tekton EventListener
+      #   env:
+      #     TEKTON_WEBHOOK_URL: ${{ secrets.TEKTON_WEBHOOK_URL }}
+      #     PIPELINE_NAME: ${{ steps.params.outputs.pipeline_name }}
+      #     TARGET_ENV: ${{ steps.params.outputs.target_environment }}
+      #     IMAGE_TAG: ${{ steps.params.outputs.image_tag }}
+      #     GIT_REVISION: ${{ steps.params.outputs.git_revision }}
+      #     REPO_URL: ${{ steps.params.outputs.repository_url }}
+      #   run: |
+      #     curl -X POST \
+      #       -H "Content-Type: application/json" \
+      #       -d '{
+      #         "pipeline_name": "'"\${PIPELINE_NAME}"'",
+      #         "target_environment": "'"\${TARGET_ENV}"'",
+      #         "image_tag": "'"\${IMAGE_TAG}"'",
+      #         "git_revision": "'"\${GIT_REVISION}"'",
+      #         "repository_url": "'"\${REPO_URL}"'"
+      #       }' \
+      #       "\${TEKTON_WEBHOOK_URL}"
